@@ -1,0 +1,25 @@
+# /etc/systemd/system/radius.service
+[Unit]
+Description=FreeRADIUS server
+Requires=docker.service
+After=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm radius.service
+ExecStart=/usr/bin/docker run --rm \
+  --name radius.service -h radius.itlab.stanford.edu \
+  -v /dev/log:/dev/log \
+  -v /etc/raddb:/etc/raddb:ro \
+  -v /var/log/radius:/var/log/radius \
+  -v /etc/radius.keytab:/etc/keytab:ro \
+  -e KRB5_KTNAME=/etc/keytab \
+  -e KRB5_CLIENT_KTNAME=/etc/keytab \
+  -p 1812-1813:1812-1813/udp -p 1812-1813:1812-1813 \
+  suet/radius:latest
+ExecStop=/usr/bin/docker stop radius.service
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+Alias=radius.service
